@@ -1,24 +1,18 @@
-import bcrypt
 
+def decode_access_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET,
+            algorithms=[settings.JWT_ALGORITHM]
+        )
 
-def hash_password(password: str) -> str:
-    password_bytes = password.encode("utf-8")
+        user_id = payload.get("sub")
 
-    salt = bcrypt.gensalt()
+        if user_id is None:
+            raise ValueError("Token is missing subject")
 
-    hashed_password = bcrypt.hashpw(
-        password_bytes,
-        salt
-    )
+        return payload
 
-    return hashed_password.decode("utf-8")
-
-
-def verify_password(
-    plain_password: str,
-    hashed_password: str
-) -> bool:
-    return bcrypt.checkpw(
-        plain_password.encode("utf-8"),
-        hashed_password.encode("utf-8")
-    )
+    except jwt.InvalidTokenError as exc:
+        raise ValueError("Invalid or expired access token") from exc
